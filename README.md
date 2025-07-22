@@ -1,3 +1,3 @@
-# <center>Annotation on Image</center>
+# <center>Image Data Collecton</center>
 * Please install the requirement first.
 
