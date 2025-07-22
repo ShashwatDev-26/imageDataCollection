@@ -1,0 +1,7 @@
+# ignore Files
+test.py
+Annotation_Console.code-workspace
+
+# ignore folders
+Annotation_Console/
+Testenv/
