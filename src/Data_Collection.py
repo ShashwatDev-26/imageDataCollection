@@ -218,7 +218,7 @@ class detectionDataCollection:
         cv2.destroyAllWindows()
 
     def HowToUse(self):
-        """
+        intro="""
         >> test.detectionDataCollection("dir_name") |*| default: train
 
         # User Settings are
@@ -258,6 +258,7 @@ class detectionDataCollection:
 
 
         """
+        return intro
 
 class classificationDataCollection:
     def __init__(self,ndir="train",samples=10):
