@@ -6,7 +6,7 @@ import json
 class detectionDataCollection:
 
   def __init__(self,rootDir="train"):
-    self.__rootDir         = os.path.join(os.getcwd(),rootDir)
+    self.__rootDir         = os.path.join(os.getcwd(),'DetectionDataset',rootDir)
     self.__imagePath       = None
     self.__labelsPath      = None
 
@@ -250,39 +250,39 @@ class detectionDataCollection:
         self.__cap.release()
         cv2.destroyAllWindows()
 
-
-
 class classificationDataCollection:
-    def __init__(self,ndir="train",samples=10):
-        self.ndir              = ndir
-        self.__rootdir         = None
-        self.__classID           = dict()
-        self.classPath         = None
-        self.currentFileName   = None
+    def __init__(self,collectiondir="train"):
+        self.collectiondir        = collectiondir
+        self.__rootdir            = None
+        self.__classID            = dict()
+        self.classPath            = None
+        self.currentFileName      = None
 
-        self.__cap             = None
-        self.__sourceID        = None
-        self.__camera_flag     = False
+        self.__cap                = None
+        self.__sourceID           = None
+        self.__camera_flag        = False
 
-        self.__startCood       = None
-        self.__endCood         = None
-        self.__drawing         = False
+        self.__startCood          = None
+        self.__endCood            = None
+        self.__drawing            = False
 
-        self.__capture         = False
-        self.__samples         = samples
-        self.__timer           = 5
-        self.__start_timer     = False
-        self.__Framecount      = None
+        self.__capture            = False
+        self.__samples            = None
+        self.__timer              = None
+        self.__start_timer        = False
+        self.__Framecount         = None
 
 
         self.__dirStruct()
-        self.set_SourceID(0)
+        self.set_timer()
+        self.set_semples()
+        self.set_SourceID()
 
-    def set_SourceID(self,sourceID):
+    def set_SourceID(self,sourceID=0):
         self.__sourceID=sourceID
-    def set_semples(self,samples):
+    def set_semples(self,samples=10):
         self.__samples = samples
-    def set_timer(self,timer):
+    def set_timer(self,timer=5):
         self.__timer = timer
     def set_nameOfObject(self,name):
         self.currentFileName=name
@@ -292,7 +292,7 @@ class classificationDataCollection:
         return self.__classID
 
     def __dirStruct(self):
-        self.__rootdir = os.path.join(os.getcwd(),self.ndir)
+        self.__rootdir = os.path.join(os.getcwd(),"classificationDataset",self.collectiondir)
         # print(self.__rootdir)
         os.makedirs(self.__rootdir,exist_ok=True)
         return self.__rootdir
@@ -376,8 +376,6 @@ class classificationDataCollection:
                 mod_frame   = Frame.copy()
 
             if self.__endCood and self.__startCood:
-                # print(f"[*] Start >> {self.__startCood}")
-                # print(f"[*] End   >> {self.__endCood}")
 
                 tx,ty = self.__startCood
                 msgcoordinat   = "[*] RIGHT CLILCK TO +ADD: "
@@ -399,7 +397,7 @@ class classificationDataCollection:
                     self.__capture      = False
                     self.__startCood    = None
                     self.__endCood      = None
-                    # cv2.destroyWindow('Cropped Video')
+
                     msgCapturing = f"[*] Capturing Done of {self.__Framecount:03}s Frames"
                     cv2.putText(mod_frame,msgCapturing,(10,50),1,0.9,(0,255, 0),1,4)
                     print(msgCapturing)
@@ -421,7 +419,6 @@ class classificationDataCollection:
                     filepath= os.path.join(self.classPath,msgCapturing+".jpg")
                     cv2.imwrite(filepath,cropped)
                     cv2.putText(mod_frame,msgCapturing,(10,50),1,0.9,(0,255, 0),1,4)
-                    # print(f"[*] saved {msgCapturing}")
                 self.__Framecount+=1
 
 
