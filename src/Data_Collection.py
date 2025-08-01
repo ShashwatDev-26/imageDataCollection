@@ -6,7 +6,7 @@ import json
 class detectionDataCollection:
 
   def __init__(self,rootDir="train"):
-    self.__rootDir         = os.path.join(os.getcwd(),'DetectionDataset',rootDir)
+    self.__rootDir         = os.path.join(os.getcwd(),"DetectionDataset",rootDir)
     self.__imagePath       = None
     self.__labelsPath      = None
 
@@ -50,11 +50,11 @@ class detectionDataCollection:
       self.__width = width
   def set_nSamples(self,sample=50):
       self.__nSamples = sample
-
   def get_json(self):
     file_path = os.path.join(self.__rootDir,"nclasses.json")
     with open(file_path, "w") as json_file:
         json.dump(self.__classes, json_file, indent=4) # indent for pretty printing
+
 
   def get_classes(self):
       return self.__classes
@@ -181,7 +181,7 @@ class detectionDataCollection:
         return
 
      while(True):
-        ret,Frame = self.__cap.read()
+        ret,Frame=self.__cap.read()
 
         if not ret:
                 print("[*] Frame not found! ")
@@ -246,9 +246,9 @@ class detectionDataCollection:
         if cv2.waitKey(1)==27:
            print("[*] Stopped by user ")
            break
+     self.__cap.release()
+     cv2.destroyAllWindows()
 
-        self.__cap.release()
-        cv2.destroyAllWindows()
 
 class classificationDataCollection:
     def __init__(self,collectiondir="train"):
