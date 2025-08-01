@@ -3,108 +3,146 @@ import time
 import os
 class detectionDataCollection:
 
-    def __init__(self,save_dir='train'):
-        self.__cap             =  None
-        self.__drawing         =  False
-        self.__start_time      =  False
-        self.save_dir          =  save_dir
-        self.__frame_count     =  0
-        self.__record_msg      =  "[*] Single Mode is on."
+  def __init__(self,rootDir="train"):
+    self.__rootDir         = os.path.join(os.getcwd(),rootDir)
+    self.__imagePath       = None
+    self.__labelsPath      = None
 
-        self.__rect_end        =  None
-        self.__rect_start      =  None
-        self.__sourceID        =  None
+    self.__sourceID        = None
+    self.__cap             = None
+    self.__camera_flag     = False
+    self.__height          = None
+    self.__width           = None
 
-        self.__coordinate_flag =  False
-        self.__camera_flag     =  False
-        self.__coordinatesli   =  []
-        self.classDict         =  dict()
+    self.__drawing         = False
+    self.__startCood       = None
+    self.__endCood         = None
 
-        self.set_SourceID(0)
-        self.set_timer(5)
-        self.set_Frame_cap(10)
-        self.set_multiAnotation(False)
+    self.__classes         = dict()
+    self.__name            = None
+    self.__classindex      = None
 
-    # All Setters
-    def set_SourceID(self,sourceID):
-        self.__sourceID=sourceID
-    def set_timer(self,timer):
-        self.__timer=timer
-    def set_Frame_cap(self,Ncap):
-        self.__Frame_cap=Ncap
-    def set_multiAnotation(self,mult):
-        self.__record_msg  = "[*] Multi Mode is ON."
-        self.__multi = mult
+    self.__coordinates     = list()
+    self.__bound           = False
 
-    # Private Methods
-    def __set_coordinate(self,classlen=0,w=0,h=0):
-        if self.__coordinate_flag:
-            RoiX1,RoiY1 = self.__rect_start
-            RoiX2,RoiY2 = self.__rect_end
-            self.__coordinatesli.append([classlen,RoiX1,RoiY1,RoiX2,RoiY2,w,h])
-            self.__coordinate_flag = False
+    self.__StartTime       = False
+    self.__Timer           = None
 
-    def __updateClass(self):
-        k = str(input("[*] Enter the name of object: ")).lower().strip().replace(" ","_")
-        if k=="":
-            print("[*] No Update")
-            return False
-        elif k not in self.classDict:
-            self.classDict[k] = len(self.classDict)
-            return True
-    def __draw_rectangle(self,event, x, y, flags, param):
+    self.__nSamples         = None
+    self.__cSample          = None
 
-        if event == cv2.EVENT_LBUTTONDOWN:
+
+    self.set_sourceID()
+    self.set_Timer(5)
+    self.set_frameHight()
+    self.set_frameWidth()
+    self.set_nSamples()
+
+  def set_sourceID(self,ID=0):
+     self.__sourceID=ID
+  def set_Timer(self,time=-1):
+      self.__Timer = time
+  def set_frameHight(self,height=480):
+      self.__height = height
+  def set_frameWidth(self,width=640):
+      self.__width = width
+  def set_nSamples(self,sample=50):
+      self.__nSamples = sample
+
+  def get_json(self):
+    file_path = os.path.join(self.__rootDir,"nclasses.json")
+    with open(file_path, "w") as json_file:
+        json.dump(self.__classes, json_file, indent=4) # indent for pretty printing
+
+  def get_classes(self):
+      return self.__classes
+
+
+  def __structdir(self):
+    self.__imagePath  = os.path.join(self.__rootDir,"images")
+    self.__labelsPath = os.path.join(self.__rootDir,"labels")
+    os.makedirs(self.__imagePath,exist_ok=True)
+    os.makedirs(self.__labelsPath,exist_ok=True)
+    prompt=f"""
+    ****************************************************************************
+                                  Directory structure
+    ****************************************************************************
+
+|->  {self.__rootDir}
+    |-> {self.__imagePath}
+    |-> {self.__labelsPath}
+
+
+    """
+    print(prompt)
+
+  def __classupdate(self):
+
+      self.__name = str(input("Enter the class name: ")).strip().lower().replace(" ","_")
+
+      if self.__name == "":
+          print("[*] No Update...")
+          return False
+      elif self.__name not in self.__classes:
+          self.__classindex = self.__classes[self.__name]  = len(self.__classes)
+          return True
+      elif self.__name in self.__classes:
+          self.__classindex = self.__classes[self.__name]
+          return True
+
+  def __coordinate(self):
+      """
+            Coordinates: self.__classindex,x_center,y_center,width,height
+      """
+
+      x1 =    min(self.__startCood[0],self.__endCood[0])
+      y1 =    min(self.__startCood[1],self.__endCood[1])
+      x2 =    max(self.__endCood[0],self.__endCood[0])
+      y2 =    max(self.__endCood[1],self.__endCood[1])
+
+      x_center    =      (x1 + x2) / 2 / self.__width
+      y_center    =      (y1 + y2) / 2 / self.__height
+
+      width       =      (x2 - x1) / self.__width
+      height      =      (y2 - y1) / self.__height
+
+      coord =   (self.__classindex,x_center,y_center,width,height)
+
+      self.__coordinates.append(coord)
+      self.__startCood   = False
+      self.__endCood     = False
+
+  def __drawRect(self,event, x, y, flags, param):
+
+
+      if event == cv2.EVENT_LBUTTONDOWN and (flags & cv2.EVENT_FLAG_CTRLKEY):
             self.__drawing     = True
-            self.__rect_start  = (x, y)
-
-
-        elif event == cv2.EVENT_MOUSEMOVE:
-            if self.__drawing:
-                self.__rect_end = (x, y)
-
-        elif event == cv2.EVENT_LBUTTONUP:
-            self.__drawing         = False
-            self.__rect_end        = (x, y)
-            self.__frame_count     = 0
-            self.__update          = self.__updateClass()
-
-            if self.__update:
-                self.__coordinate_flag = True
-                self.__start_time      = time.time()
-                print("[*] Class updated ...")
-            else:
-                print("[*] No new class is Added.. ")
-
-
-            if self.__multi:
-                Toggle = input("[*] Continue on Adding classes (Y/N): ").lower().strip()[0]
-                if Toggle =="y":
-                    self.__multi       = True
+            self.__startCood   = (x,y)
+      elif event == cv2.EVENT_MOUSEMOVE and self.__drawing:
+            self.__endCood = (x,y)
+      elif event == cv2.EVENT_LBUTTONUP and self.__drawing:
+          self.__drawing   = False
+          self.__endCood   = (x,y)
+      elif event == cv2.EVENT_RBUTTONDOWN and self.__StartTime == False:
+            if self.__endCood and self.__startCood:
+                update = self.__classupdate()
+                if update:
+                    self.__coordinate()
+                    self.__bound = True
                 else:
-                    self.__record_msg  ="[*] Single Mode is on."
-                    print("[*] Capturing is on Process.")
-                    print(f"[*] Wait for{self.__timer}s")
-                    self.__multi           = False
-                    self.__start_time      = time.time()
-                    self.__update          = True
+                    self.__endCood   = False
+                    self.__startCood = False
 
-    def __Directories(self):
+      if event == cv2.EVENT_RBUTTONDOWN and (flags & cv2.EVENT_FLAG_CTRLKEY) and self.__bound:
+          self.__StartTime = time.time()
+          self.__bound   = False
+
+
+
+
+  def camera_init_(self,):
         """
-            return: images_path, labels_path
-        """
-        imgf = os.path.join(self.save_dir,"images")
-        labf = os.path.join(self.save_dir,"labels")
-        os.makedirs(imgf,exist_ok=True)
-        os.makedirs(labf,exist_ok=True)
-        return imgf,labf
-
-    # Camera Init
-    def camera_init_(self,height=480,width=640):
-
-
-        """
-            sourceID : int >= 0 , proper url with usrname and password if applicable Default 0
+            sourceID     : int >= 0 , proper url with usrseName and password if applicable Default 0
             (int) height : Hight of the Frame, Default: 480px
             (int) width  : Width of the Frame, Default: 640px
         """
@@ -116,149 +154,101 @@ class detectionDataCollection:
         self.__cap = cv2.VideoCapture(self.__sourceID)
 
         if not self.__cap.isOpened():
-            print("[*] Error: Could not camera stream.")
-
+            print("[*] Error: Unable to open camera! .")
+            return
         else:
             self.__camera_flag = True
-            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-            print(f"[*] Camera is initialised with Source-ID: {self.__sourceID}")
+            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.__width)
+            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.__height)
+            print(f"[*] Camera is initiating with Source-ID: {self.__sourceID}")
 
-    # Main Mathod
-    def annotation(self):
+  def annotation(self):
 
-        """
-            (str) save_dir  : It will create a Directory, if not exist,         |*| Default: None
-            (int) timer     : Timer for Wait time after creating a bounding box |*| Default: 5s
-            (int) Frame_cap : Number of frame you want to capture. After timer  |*| Default: 30
-        """
+     ctime            = 0
+     msg              = ""
+     classlen         = 0
+     capture_block    = False
 
-        imgpath = None
-        labpath = None
-        if self.save_dir is None:
-            print("invalid Directory! ")
-            return
+     if self.__camera_flag:
+        print("[*] Camera is initiated successfully.")
+        self.__structdir()
+        cv2.namedWindow("Live")
+        cv2.setMouseCallback("Live",self.__drawRect)
+     else:
+        print("[*] Camera is not initiated...")
+        return
+
+     while(True):
+        ret,Frame=self.__cap.read()
+
+        if not ret:
+                print("[*] Frame not found! ")
+                break
         else:
-            imgpath,labpath = self.__Directories()
-        # variable __init
-        self.__rect_start     =  None
-        self.__rect_end       =  None
-        self.__coordinatesli  =  []
-        self.__start_time     =  False
-        self.__frame_count    =  0
+            Frame       = cv2.flip(Frame,1)
+            mod_frame   = Frame.copy()
+
+        if self.__endCood and self.__startCood:
+            Sx = min(self.__startCood[0],self.__endCood[0])
+            Sy = min(self.__startCood[1],self.__endCood[1])
+            Ey = max(self.__startCood[1],self.__endCood[1])
+            msgadd   = "[*] RIGHT CLILCK TO +ADD OBJECT: "
+            msgcoord = "[*] CTRL + RIGHT CLICK TO CAPTURE:"
+            cv2.putText(mod_frame,msgadd,(Sx+2,Sy-2),1,1,(0,128, 255),2,4)
+            cv2.putText(mod_frame,msgcoord,(Sx+2,Ey+11),1,1,(0,128, 255),2,4)
+            cv2.rectangle(mod_frame,self.__startCood,self.__endCood,(255,23,4),1)
 
 
-        # Initialize camera frame
-        if self.__camera_flag == False:
-            print("[*] Camera is not initiated...")
-            return
 
-        cv2.namedWindow("instruction")
-        cv2.setMouseCallback("instruction", self.__draw_rectangle)
-
-        while True:
-            ret, frame  = self.__cap.read()
-            if not ret:
-                break
-            frame       = cv2.flip(frame,1)
-            mod_frame   = frame.copy()
-
-
-            # If drawing or after mouse released
-            if self.__rect_start and self.__rect_end:
-                cv2.rectangle(mod_frame, self.__rect_start, self.__rect_end, (0, 0, 255), 1)
-
-            # Only for multi-Annotation
-            if self.__multi:
-                self.__start_time = False
-                classlen          = len(self.classDict)-1
-                self.__set_coordinate(frame.shape[0],frame.shape[1])
-
-            if self.__start_time and (time.time() - self.__start_time) >= self.__timer:
-
-                # Flag is on from release_left_button
-                classlen       = len(self.classDict)
-                self.__set_coordinate(classlen,frame.shape[0],frame.shape[1])
+        if self.__StartTime:
+            ctime = int(time.time()-self.__StartTime)
+            msg   = f"[*] {ctime:02}:00"
+            cv2.putText(mod_frame,msg,(10,50),1,1,(128,0, 255),2,4)
+        if ctime > self.__Timer:
+            self.__StartTime = False
+            capture_block    = True
+            self.__cSample   = len(os.listdir(self.__imagePath))
+            classlen         = len(self.__coordinates)
+            if self.__cSample != 0:
+                self.__nSamples+=self.__cSample
+            ctime = 0
 
 
-                if self.__frame_count < self.__Frame_cap and self.__update:
+        if capture_block:
+            if self.__cSample < self.__nSamples:
+                msg = f"[{self.__cSample}] capturing..."
+                cv2.putText(mod_frame,msg,(10,59),1,0.9,(255,128, 1),1,4)
+                img = os.path.join(self.__imagePath, f'frame_{classlen:03}_{self.__cSample:03}.jpg')
+                lab = os.path.join(self.__labelsPath, f'frame_{classlen:03}_{self.__cSample:03}.txt')
 
-                    length = len(self.__coordinatesli)
-                    self.__record_msg = f"[*] Capturing Frame: {self.__frame_count}"
-                    img = os.path.join(imgpath, f'frame_{classlen}_{self.__frame_count:03}.jpg')
-                    lab = os.path.join(labpath, f'frame_{classlen}_{self.__frame_count:03}.txt')
+                # print(f'\n[*] frame_{classlen:03}_{self.__cSample:03}.jpg')
 
-                    cv2.imwrite(img, frame)
-
-                    with open(lab,'w') as file:
-                        for i in range(length):
-                            cl,RoiX1,RoiY2,RoiX2,RoiY2,W,H = self.__coordinatesli[i]
-                            if i == length-1:
-                                file.write(f'{classlen} {RoiX1} {RoiY2} {RoiX2} {RoiY2} {W} {H}')
+                cv2.imwrite(img, Frame)
+                with open(lab,'w') as file:
+                        for i in range(classlen):
+                            #  classindex,x_center,y_center,width,height
+                            classindex,x_center,y_center,width,height = self.__coordinates[i]
+                            if i == classlen-1:
+                                file.write(f'{classindex} {x_center} {y_center} {width} {height}')
                             else:
-                                file.write(f'{classlen} {RoiX1} {RoiY2} {RoiX2} {RoiY2} {W} {H}\n')
-                    print(f"[*] Saved {img}")
-                    self.__frame_count+=1
+                                 file.write(f'{classindex} {x_center} {y_center} {width} {height}\n')
 
-                else:
-                    self.__start_time     =  False
-                    self.__coordinatesli  =  []
-                    self.__record_msg            =  f"[*] Capturing completed.. "
+            else:
+                self.__coordinates=[]
+                capture_block = False
 
-            cv2.putText(mod_frame, self.__record_msg, (10, 50),cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+            self.__cSample+=1
 
-            cv2.imshow("instruction",mod_frame)
-            # cv2.imshow("Draw Rectangle", frame)  # uncomment to see original capture image
+        cv2.imshow("Live",mod_frame)
 
-            if cv2.waitKey(1) & 0xFF == 27:        # Press ESC to exit
-                print("[*] Capturing Stopped...! ")
-                break
+        if cv2.waitKey(1)==27:
+           print("[*] Stopped by user ")
+           break
 
         self.__cap.release()
         cv2.destroyAllWindows()
 
-    def HowToUse(self):
-        intro="""
-        >> test.detectionDataCollection("dir_name") |*| default: train
 
-        # User Settings are
-        <-- test the camera befor seting Source id -->
-        >> test.set_SourceID(int/url)         |*| default: 0
-        >> test.set_timer(int)                |*| default: 5
-        <-- Number of samples -->
-        >> test.set_Frame_cap(int)            |*| default: 10
-        >> test.set_multiAnotation(False)     |*| default: False
-
-        # Main Functions
-        test.camera_init_(height,width)       |*| default: height=480,width=640
-        test.annotation()
-        ########################################################################
-                                        Instruction
-        ########################################################################
-
-        >> Single mode <<
-        [*] test.detectionDataCollection("train")
-        [*] test.set_multiAnotation(True)
-        [*] test.camera_init_()
-        [*] test.annotation()
-
-        story:
-        ''''''
-
-
-        >> Multi mode <<
-        [*] test.detectionDataCollection("train")
-        [*] test.set_multiAnotation(True)
-        [*] test.camera_init_()
-        [*] test.annotation()
-
-        story:
-        ''''''
-
-
-
-        """
-        return intro
 
 class classificationDataCollection:
     def __init__(self,ndir="train",samples=10):
