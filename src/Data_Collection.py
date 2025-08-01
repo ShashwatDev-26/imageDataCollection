@@ -1,6 +1,8 @@
 import cv2
 import time
 import os
+import json
+
 class detectionDataCollection:
 
   def __init__(self,rootDir="train"):
