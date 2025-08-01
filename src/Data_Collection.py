@@ -384,7 +384,7 @@ class classificationDataCollection:
                 cv2.rectangle(mod_frame,self.__startCood,self.__endCood,(255,23,4),1)
             if self.__start_timer:
                 timer = int(time.time()-self.__start_timer)
-                msg =f"[*] {timer}"
+                msg =f"[*] {timer:02}:00"
                 cv2.putText(mod_frame,msg,(10,50),1,0.9,(0,128, 255),1,4)
                 if timer>self.__timer:
                     msgCapturing = "[*] Capturing Started..."
@@ -393,16 +393,7 @@ class classificationDataCollection:
                     self.__capture     = True
 
             if self.__capture:
-                if self.__Framecount>self.__samples:
-                    self.__capture      = False
-                    self.__startCood    = None
-                    self.__endCood      = None
-
-                    msgCapturing = f"[*] Capturing Done of {self.__Framecount:03}s Frames"
-                    cv2.putText(mod_frame,msgCapturing,(10,50),1,0.9,(0,255, 0),1,4)
-                    print(msgCapturing)
-                else:
-
+                if self.__Framecount<self.__samples:
                     x1,y1  = self.__startCood
                     x2,y2  = self.__endCood
 
@@ -419,6 +410,16 @@ class classificationDataCollection:
                     filepath= os.path.join(self.classPath,msgCapturing+".jpg")
                     cv2.imwrite(filepath,cropped)
                     cv2.putText(mod_frame,msgCapturing,(10,50),1,0.9,(0,255, 0),1,4)
+
+                else:
+                    self.__capture      = False
+                    self.__startCood    = None
+                    self.__endCood      = None
+
+                    msgCapturing = f"[*] Capturing Done of {self.__Framecount:03}s Frames"
+                    cv2.putText(mod_frame,msgCapturing,(10,50),1,0.9,(0,255, 0),1,4)
+                    print(msgCapturing)
+
                 self.__Framecount+=1
 
 
