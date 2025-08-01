@@ -181,7 +181,7 @@ class detectionDataCollection:
         return
 
      while(True):
-        ret,Frame=self.__cap.read()
+        ret,Frame = self.__cap.read()
 
         if not ret:
                 print("[*] Frame not found! ")
