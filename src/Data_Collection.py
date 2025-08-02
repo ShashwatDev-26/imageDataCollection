@@ -6,7 +6,7 @@ import json
 class detectionDataCollection:
 
   def __init__(self,rootDir="train"):
-    self.__rootDir         = os.path.join(os.getcwd(),"DetectionDataset",rootDir)
+    self.__rootDir         = os.path.join(os.getcwd(),"detectionDataset",rootDir)
     self.__imagePath       = None
     self.__labelsPath      = None
 
