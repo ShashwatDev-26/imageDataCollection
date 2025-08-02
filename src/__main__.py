@@ -1,3 +1,1 @@
-from Data_Collection import *
-test=detectionDataCollection()
-print(dir(test))
+from .Data_Collection import *
