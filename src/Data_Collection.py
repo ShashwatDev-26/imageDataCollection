@@ -160,9 +160,19 @@ class detectionDataCollection:
             return
         else:
             self.__camera_flag = True
-            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.__width)
-            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.__height)
+            # print(self.__height,self.__width)
+            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH,self.__width)
+            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT,self.__height)
+
+            sheight = self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            swidth  = self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             print(f"[*] Camera is initiating with Source-ID: {self.__sourceID}")
+            if self.__height != sheight and self.__width != swidth:
+                print(f"[*] Camera might not Support this resolution '{self.__height} X {self.__width}' ")
+                print("[*] Using Default: ")
+            print(f"[*] HEIGHT  : {sheight} px")
+            print(f"[*] WIDTH   : {swidth} px")
+            print("[*] Please wait.......")
 
   def annotation(self):
 
