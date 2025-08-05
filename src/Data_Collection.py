@@ -2,11 +2,13 @@ import cv2
 import time
 import os
 import json
+import yaml
 
 class detectionDataCollection:
 
   def __init__(self,rootDir="train"):
     self.__rootDir         = os.path.join(os.getcwd(),"detectionDataset",rootDir)
+    self.__yamlfilepath    = os.path.join(os.getcwd(),"detectionDataset",'data.yaml')
     self.__imagePath       = None
     self.__labelsPath      = None
 
@@ -50,15 +52,17 @@ class detectionDataCollection:
       self.__width = width
   def set_nSamples(self,sample=50):
       self.__nSamples = sample
-  def get_json(self):
-    file_path = os.path.join(self.__rootDir,"nclasses.json")
-    with open(file_path, "w") as json_file:
-        json.dump(self.__classes, json_file, indent=4) # indent for pretty printing
 
+  def __yamalfile(self):
+   # dataset/data.yaml
+   # dataset/train/images/*.jpg
+   # dataset/train/labels/*.txt
+   binding = {"name":list(self.__classes.keys()),"nc":len(self.__classes),'train':f"{self.__rootDir}",'test':f"{self.__rootDir}","val":f"{self.__rootDir}"}
+   with open(self.__yamlfilepath, 'w') as file:
+       yaml.dump(binding, file, sort_keys=False)
 
   def get_classes(self):
       return self.__classes
-
 
   def __structdir(self):
     self.__imagePath  = os.path.join(self.__rootDir,"images")
@@ -69,12 +73,10 @@ class detectionDataCollection:
     ****************************************************************************
                                   Directory structure
     ****************************************************************************
-
-|->  {self.__rootDir}
-    |-> {self.__imagePath}
-    |-> {self.__labelsPath}
-
-
+    {self.__rootDir}
+    |____{self.__imagePath}
+    |____{self.__labelsPath}
+    |__{self.__yamlfilepath}
     """
     print(prompt)
 
@@ -138,9 +140,6 @@ class detectionDataCollection:
       if event == cv2.EVENT_RBUTTONDOWN and (flags & cv2.EVENT_FLAG_CTRLKEY) and self.__bound:
           self.__StartTime = time.time()
           self.__bound   = False
-
-
-
 
   def camera_init_(self,):
         """
@@ -254,6 +253,9 @@ class detectionDataCollection:
         cv2.imshow("Live",mod_frame)
 
         if cv2.waitKey(1)==27:
+           if len(self.__classes) != 0:
+               self.__yamalfile()
+               print(f"[*] Yaml file is Added: ")
            print("[*] Stopped by user ")
            break
      self.__cap.release()
@@ -445,9 +447,6 @@ class classificationDataCollection:
 
         self.__cap.release()
         cv2.destroyAllWindows()
-
-
-
 
 
 
