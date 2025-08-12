@@ -262,6 +262,7 @@ class detectionDataCollection:
      cv2.destroyAllWindows()
 
 
+
 class classificationDataCollection:
     def __init__(self,collectiondir="train"):
         self.collectiondir        = collectiondir
@@ -273,6 +274,8 @@ class classificationDataCollection:
         self.__cap                = None
         self.__sourceID           = None
         self.__camera_flag        = False
+        self.__height             = None
+        self.__width              = None
 
         self.__startCood          = None
         self.__endCood            = None
@@ -284,16 +287,24 @@ class classificationDataCollection:
         self.__start_timer        = False
         self.__Framecount         = None
 
+        self.__playback_speed     = None
+
 
         self.__dirStruct()
         self.set_timer()
         self.set_semples()
         self.set_SourceID()
+        self.set_frameHight()
+        self.set_frameWidth()
 
     def set_SourceID(self,sourceID=0):
         self.__sourceID=sourceID
     def set_semples(self,samples=10):
         self.__samples = samples
+    def set_frameHight(self,height=480):
+      self.__height = height
+    def set_frameWidth(self,width=640):
+      self.__width = width
     def set_timer(self,timer=5):
         self.__timer = timer
     def set_nameOfObject(self,name):
@@ -302,6 +313,9 @@ class classificationDataCollection:
         if name in list(self.__classID.keys()):
             return self.__classID[name]
         return self.__classID
+    def set_playback_speed(self,speed):
+        self.__playback_speed = speed
+
 
     def __dirStruct(self):
         self.__rootdir = os.path.join(os.getcwd(),"classificationDataset",self.collectiondir)
@@ -334,6 +348,13 @@ class classificationDataCollection:
         if self.__sourceID is None:
             print("[*] Camera must be initiated with Source ")
             return
+        if os.path.isfile(self.__sourceID):
+            if self.__playback_speed == None:
+                self.set_playback_speed(20)
+            print(f"[*] Video playback speed set on {self.__playback_speed}:")
+            print("[*] Long press ESC to exit:")
+            print(f"[*] Timer has changed {self.__timer}")
+
 
         self.__cap = cv2.VideoCapture(self.__sourceID)
 
@@ -344,7 +365,16 @@ class classificationDataCollection:
             self.__camera_flag = True
             self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
             self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+            sheight = self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            swidth  = self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             print(f"[*] Camera is initialised with Source-ID: {self.__sourceID}")
+            if self.__height != sheight and self.__width != swidth:
+                print(f"[*] Camera might not Support this resolution '{self.__height} X {self.__width}' ")
+                print("[*] Using default resolution with resized shape: ")
+            print(f"[*] HEIGHT  : {sheight} px")
+            print(f"[*] WIDTH   : {swidth} px")
+            print("[*] Please wait.......")
 
     def __drawRect(self,event, x, y, flags, param):
 
@@ -384,8 +414,15 @@ class classificationDataCollection:
                 print("[*] Frame is Not working")
                 break
             else:
-                Frame       = cv2.flip(Frame,1)
-                mod_frame   = Frame.copy()
+                if os.path.isfile(self.__sourceID):
+                    mod_frame   = Frame.copy()
+                    mod_frame = cv2.resize(mod_frame,( self.__width,self.__height))
+                    cv2.waitKey(self.__playback_speed)
+                    self.__timer = 0
+                else:
+                    Frame       = cv2.flip(Frame,1)
+                    mod_frame   = Frame.copy()
+                    mod_frame = cv2.resize(mod_frame, (self.__width,self.__height))
 
             if self.__endCood and self.__startCood:
 
@@ -447,7 +484,6 @@ class classificationDataCollection:
 
         self.__cap.release()
         cv2.destroyAllWindows()
-
 
 
 

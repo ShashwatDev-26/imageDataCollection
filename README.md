@@ -43,12 +43,17 @@ if __name__ == __main__:
 ~~~
 from Data_Collection import classificationDataCollection
 if __name__ == __main__:
+  path = "..\src\Test.mp4"
   test = classificationDataCollection()
-  test.set_SourceID(0)
+  test.set_SourceID(0) # | test.set_SourceID(path)
+  test.set_playback_speed(15)
   test.set_semples(1)
   test.set_timer(5)
   test.camera_init_()
   test.imageCropingAndCapturing()
+~~~
+~~~
+  GIF
 ~~~
 ***
 # <center> To be continued ....</center>
