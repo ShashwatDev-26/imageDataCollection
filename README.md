@@ -52,9 +52,9 @@ if __name__ == __main__:
   test.camera_init_()
   test.imageCropingAndCapturing()
 ~~~
-~~~
-  GIF
-~~~
+***
+![](https://github.com/ShashwatDev-26/imageDataCollection/blob/main/media/Demo_DataClassificaton.gif)
+
 ***
 # <center> To be continued ....</center>
 
