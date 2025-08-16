@@ -29,6 +29,9 @@ if __name__ == __main__:
   dtest.camera_init_()
   dtest.annotation()
 ~~~
+***
+![](https://github.com/ShashwatDev-26/imageDataCollection/blob/main/media/Demo_DataDetection.gif)
+***
 
 ## Instructions for Classification Data
 ***
