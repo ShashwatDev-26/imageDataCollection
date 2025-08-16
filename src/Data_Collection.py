@@ -102,7 +102,6 @@ class detectionDataCollection:
       """
             Coordinates: self.__classindex,x_center,y_center,width,height
       """
-
       x1 =    min(self.__startCood[0],self.__endCood[0])
       y1 =    min(self.__startCood[1],self.__endCood[1])
       x2 =    max(self.__endCood[0],self.__endCood[0])
@@ -161,18 +160,20 @@ class detectionDataCollection:
                 self.set_playback_speed(20)
             print(f"[*] Video playback speed set on {self.__playback_speed}:")
             print("[*] Long press ESC to exit:")
+            self.__cap    = cv2.VideoCapture(self.__sourceID)
+            self.__height = self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            self.__width  = self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 
-        self.__cap = cv2.VideoCapture(self.__sourceID)
+        else:
+            self.__cap = cv2.VideoCapture(self.__sourceID)
+            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH,self.__width)
+            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT,self.__height)
 
         if not self.__cap.isOpened():
             print("[*] Error: Unable to open camera! .")
             return
         else:
             self.__camera_flag = True
-            # print(self.__height,self.__width)
-            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH,self.__width)
-            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT,self.__height)
-
             sheight = self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
             swidth  = self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             print(f"[*] Camera is initiating with Source-ID: {self.__sourceID}")
@@ -207,13 +208,11 @@ class detectionDataCollection:
                 break
         else:
             if os.path.isfile(self.__sourceID):
-                    Frame   = cv2.resize(Frame, (self.__width+50,self.__height+50))
                     mod_frame   = Frame.copy()
                     cv2.waitKey(self.__playback_speed)
                     self.__Timer = 0
             else:
                 Frame       = cv2.flip(Frame,1)
-                Frame       = cv2.resize(Frame, (self.__width+50,self.__height+50))
                 mod_frame   = Frame.copy()
 
         if self.__endCood and self.__startCood:
@@ -506,4 +505,10 @@ class classificationDataCollection:
 
 
 
-
+if __name__ == "__main__":
+    test = detectionDataCollection()
+    test.set_sourceID("C:\Workstation\BasicProgramming\Test\src\Test.mp4")
+    test.camera_init_()
+    test.set_nSamples(1)
+    test.set_playback_speed(15)
+    test.annotation()
