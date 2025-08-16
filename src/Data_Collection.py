@@ -34,6 +34,7 @@ class detectionDataCollection:
 
     self.__nSamples         = None
     self.__cSample          = None
+    self.__playback_speed   = None
 
 
     self.set_sourceID()
@@ -42,6 +43,9 @@ class detectionDataCollection:
     self.set_frameWidth()
     self.set_nSamples()
 
+
+  def set_playback_speed(self,speed):
+        self.__playback_speed = speed
   def set_sourceID(self,ID=0):
      self.__sourceID=ID
   def set_Timer(self,time=-1):
@@ -152,6 +156,12 @@ class detectionDataCollection:
             print("[*] Camera must be initiated with Source ")
             return
 
+        if os.path.isfile(self.__sourceID):
+            if self.__playback_speed == None:
+                self.set_playback_speed(20)
+            print(f"[*] Video playback speed set on {self.__playback_speed}:")
+            print("[*] Long press ESC to exit:")
+
         self.__cap = cv2.VideoCapture(self.__sourceID)
 
         if not self.__cap.isOpened():
@@ -168,7 +178,7 @@ class detectionDataCollection:
             print(f"[*] Camera is initiating with Source-ID: {self.__sourceID}")
             if self.__height != sheight and self.__width != swidth:
                 print(f"[*] Camera might not Support this resolution '{self.__height} X {self.__width}' ")
-                print("[*] Using Default: ")
+                print("[*] Using default resolution with resized shape:")
             print(f"[*] HEIGHT  : {sheight} px")
             print(f"[*] WIDTH   : {swidth} px")
             print("[*] Please wait.......")
@@ -196,8 +206,15 @@ class detectionDataCollection:
                 print("[*] Frame not found! ")
                 break
         else:
-            Frame       = cv2.flip(Frame,1)
-            mod_frame   = Frame.copy()
+            if os.path.isfile(self.__sourceID):
+                    Frame   = cv2.resize(Frame, (self.__width+50,self.__height+50))
+                    mod_frame   = Frame.copy()
+                    cv2.waitKey(self.__playback_speed)
+                    self.__Timer = 0
+            else:
+                Frame       = cv2.flip(Frame,1)
+                Frame       = cv2.resize(Frame, (self.__width+50,self.__height+50))
+                mod_frame   = Frame.copy()
 
         if self.__endCood and self.__startCood:
             Sx = min(self.__startCood[0],self.__endCood[0])
