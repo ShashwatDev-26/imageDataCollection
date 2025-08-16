@@ -504,11 +504,3 @@ class classificationDataCollection:
 
 
 
-
-if __name__ == "__main__":
-    test = detectionDataCollection()
-    test.set_sourceID("C:\Workstation\BasicProgramming\Test\src\Test.mp4")
-    test.camera_init_()
-    test.set_nSamples(1)
-    test.set_playback_speed(15)
-    test.annotation()
