@@ -1,8 +1,0 @@
-name:
-- book
-- mug
-- ipad
-nc: 3
-train: c:\..\Train
-test: c:\..\Train
-val: c:\..\Train
