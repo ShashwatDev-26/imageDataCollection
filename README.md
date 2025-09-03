@@ -20,6 +20,7 @@
 ### init code
 ***
 ~~~
+pip install detection-datacollection
 from Data_Collection import detectionDataCollection
 if __name__ == __main__:
   dtest = detectionDataCollection()
